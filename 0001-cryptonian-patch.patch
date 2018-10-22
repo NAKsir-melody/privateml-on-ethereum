@@ -1,0 +1,130 @@
+From b321da4da941e78b02631c217f3f8812d1b4b297 Mon Sep 17 00:00:00 2001
+From: sigmoid <alphabet@hotmail.co.kr>
+Date: Mon, 22 Oct 2018 13:23:21 +0900
+Subject: [PATCH] cryptonian patch
+
+Read Storage Trie & script call
+mining difficulty change
+
+Signed-off-by: sigmoid <alphabet@hotmail.co.kr>
+---
+ consensus/ethash/consensus.go |  1 +
+ core/state_processor.go       | 78 ++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 78 insertions(+), 1 deletion(-)
+
+diff --git a/consensus/ethash/consensus.go b/consensus/ethash/consensus.go
+index eb0f73d..b1d1214 100644
+--- a/consensus/ethash/consensus.go
++++ b/consensus/ethash/consensus.go
+@@ -295,6 +295,7 @@ func (ethash *Ethash) CalcDifficulty(chain consensus.ChainReader, time uint64, p
+ // the difficulty that a new block should have when created at time
+ // given the parent block's time and difficulty.
+ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
++	return big.NewInt(300000)
+ 	next := new(big.Int).Add(parent.Number, big1)
+ 	switch {
+ 	case config.IsByzantium(next):
+diff --git a/core/state_processor.go b/core/state_processor.go
+index 8e238ce..26c89a6 100644
+--- a/core/state_processor.go
++++ b/core/state_processor.go
+@@ -25,6 +25,12 @@ import (
+ 	"github.com/ethereum/go-ethereum/core/vm"
+ 	"github.com/ethereum/go-ethereum/crypto"
+ 	"github.com/ethereum/go-ethereum/params"
++	"github.com/ethereum/go-ethereum/log"
++	"github.com/ethereum/go-ethereum/trie"
++	"github.com/ethereum/go-ethereum/rlp"
++	"os/exec"
++	"fmt"
++	"os"
+ )
+ 
+ // StateProcessor is a basic Processor, which takes care of transitioning
+@@ -81,6 +87,18 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
+ 	return receipts, allLogs, *usedGas, nil
+ }
+ 
++//crytonian helper
++func keybytesToHex(str []byte) []byte {
++	l := len(str)*2 + 1
++	var nibbles = make([]byte, l)
++	for i, b := range str {
++		nibbles[i*2] = b / 16
++		nibbles[i*2+1] = b % 16
++	}
++	nibbles[l-1] = 16
++	return nibbles
++}
++
+ // ApplyTransaction attempts to apply a transaction to the given state database
+ // and uses the input parameters for its environment. It returns the receipt
+ // for the transaction, gas used and an error if the transaction failed,
+@@ -122,5 +140,63 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
+ 	receipt.Logs = statedb.GetLogs(tx.Hash())
+ 	receipt.Bloom = types.CreateBloom(types.Receipts{receipt})
+ 
+-	return receipt, gas, err
++	// cryptonian
++	// Read senders storage value
++	contract_addr := common.HexToAddress("0x6dadeaa749ab19afa14c25e6e4a73c15085b193c")
++	if msg.To() != nil {
++		if *msg.To() == contract_addr {
++
++			fmt.Println("===========")
++			fmt.Printf("%x\n", contract_addr)
++			var storage_trie = statedb.StorageTrie(contract_addr)
++
++			if storage_trie == nil {
++				log.Info("Contract empty")
++			} else {
++				log.Info("Contract charged")
++			}
++			//storage_trie.
++			// found := make(map[string]string)
++			it := trie.NewIterator(storage_trie.NodeIterator(nil))
++			for it.Next() {
++				fmt.Println("===========")
++			/*	
++				fmt.Println(it.Key)
++				myaddr := storage_trie.GetKey(it.Key);
++				fmt.Println(myaddr)
++				fmt.Println(common.BytesToAddress(myaddr))
++			*/
++				var data []byte
++				rlp.DecodeBytes(it.Value, &data)
++				fmt.Println(string(data[:29]))
++				fmt.Println("===========")
++			/*
++				var keyval = keybytesToHex(it.Key)
++				fmt.Printf("%x\n",keyval)
++				fmt.Println("===========")
++				var valval = keybytesToHex(it.Vale)
++				fmt.Printf("%x\n", valval)
++				fmt.Println("===========")
++			*/
++				file, err := os.Create("/home/naksir/WORK/cryptonian/ML/MNIST/input.txt")
++				if err != nil {
++
++				}
++				defer file.Close()
++				file.Write(data[:29])
++				file.Close()
++				cmd := exec.Command("python2", "/home/naksir/WORK/cryptonian/ML/MNIST/mnist_inference.py")
++				out, err := cmd.CombinedOutput()
++				if err != nil {
++					fmt.Println(err)
++				}
++				tt := string(out[len(out)-4:len(out)])
++				fmt.Println(tt)
++				var bloom types.Bloom
++				bloom.SetBytes(out[len(out)-4:len(out)])
++				receipt.Bloom = bloom;
++			}
++		}
++	}
++		return receipt, gas, err
+ }
+-- 
+2.7.4
+

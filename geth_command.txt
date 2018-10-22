@@ -1,0 +1,36 @@
+personal.newAccount("base")
+eth.getBalance(eth.accounts[0])
+miner.start()
+miner.stop()
+
+web3.eth.defaultAccount = eth.accounts[0]
+web3.personal.unlockAccount(eth.coinbase)
+
+loadScript("/home/naksir/WORK/cryptonian/contracts/datastore.abi")
+loadScript("/home/naksir/WORK/cryptonian/contracts/datastore.bin")
+mycontract.setData(eth.coinbase, "2.png\n")
+loadScript("/home/naksir/WORK/cryptonian/send_transaction.txt)
+
+web3.eth.getStorageAt("0x53257a7936a62aC03B305ED9285ac96ee70E7d31", 0)
+eth.sendTransaction({from:eth.coinbase, to:eth.accounts[1], value: web3.toWei(1,"ether")})
+
+eth.pendingTransactions
+eth.accounts
+eth.getBalance(eth.accounts[0])
+
+eth.blockNumber
+eth.getBlock(12)
+eth.sendTransaction({from:eth.coinbase, to:"0xB5D58C2e36bC9DE9878C1706155a77bFa75a7b68", value: web3.toWei(10,"ether")})
+personal.listWallets[0].status
+
+#unlock
+mycontract.Submit(1, "1,2,3", {from:eth.accounts[1],gas:50000})
+
+web3.eth.getTransaction("0x1bda9abbb10874b1e5fbb946ae9f372c9301cba39cc1a9e3335d17a04dfa0fe5")
+web3.eth.getTransactionReceipt("0x1bda9abbb10874b1e5fbb946ae9f372c9301cba39cc1a9e3335d17a04dfa0fe5")
+eth.getBlock("0x170dee94c675dd0d6c5bc2712a28e20f8ff86f5851c7724ad7d88b3db84b34d3")
+eth.getTransaction(eth.getBlock("latest").transactions[0])
+
+
+web3.eth.getCode("0xB5D58C2e36bC9DE9878C1706155a77bFa75a7b68")
+txpool.status

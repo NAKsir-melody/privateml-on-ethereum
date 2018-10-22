@@ -1,0 +1,2 @@
+model_checkpoint_path: "sigmoid"
+all_model_checkpoint_paths: "sigmoid"
